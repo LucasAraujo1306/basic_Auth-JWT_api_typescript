@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import JWT from 'jsonwebtoken';
 import { User } from '../models/User';
 
 export const ping = (req: Request, res: Response) => {
@@ -13,7 +14,13 @@ export const register = async (req: Request, res: Response) => {
         if (!hasUser) {
             let newUser = await User.create({ email, password });
 
-            return res.status(201).json({ id: newUser.id });
+            const token = JWT.sign(
+                { id: newUser.id, email: newUser.email },
+                process.env.JWT_SECRET as string,
+                { expiresIn: '2h' }
+            );
+
+            return res.status(201).json({ id: newUser.id, token });
         } else {
             return res.json({ error: 'E-mail já existe.' });
         }
@@ -32,7 +39,12 @@ export const login = async (req: Request, res: Response) => {
         });
 
         if (user) {
-            res.json({ status: true });
+            const token = JWT.sign(
+                { id: user.id, email: user.email },
+                process.env.JWT_SECRET as string,
+                { expiresIn: '2h' }
+            );
+            res.json({ status: true, token });
             return;
         }
     }
