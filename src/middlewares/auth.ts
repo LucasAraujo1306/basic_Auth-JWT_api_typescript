@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import JWT from 'jsonwebtoken';
 import { User } from '../models/User';
 
 export const Auth = {
@@ -7,18 +8,16 @@ export const Auth = {
         //fazer verificação de auth
 
         if (req.headers.authorization) {
-            let hash: string = req.headers.authorization.split(' ')[1];
-            let decode: string = Buffer.from(hash, 'base64').toString('ascii');
-            let data: string[] = decode.split(':');
-            if (data.length === 2) {
-                let hasUser = await User.findOne({
-                    where: {
-                        email: data[0],
-                        password: data[1]
-                    }
-                })
-                if (hasUser) {
+            const [authType, token] = req.headers.authorization.split(' ');
+            if (authType === 'Bearer') {
+                try {
+                    JWT.verify(
+                        token,
+                        process.env.JWT_SECRET as string
+                    );
                     success = true;
+                } catch (error) {
+
                 }
             }
         }
